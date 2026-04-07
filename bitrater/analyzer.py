@@ -120,22 +120,19 @@ class AudioQualityAnalyzer:
         if class_name is None:
             return None
 
-        # Guard: a lossy container cannot be lossless quality.
-        # When the model predicts LOSSLESS for a lossy file with low confidence,
-        # fall back to the highest-probability non-LOSSLESS class instead.
-        # Threshold 0.60: below this the LOSSLESS prediction is unreliable for lossy files.
-        LOSSLESS_CONFIDENCE_THRESHOLD = 0.60
+        # Guard: lossy containers (MP3, AAC, etc.) cannot be lossless by definition.
+        # If the model predicts LOSSLESS for a lossy file, fall back to the
+        # highest-probability non-LOSSLESS class.
         if class_name == "LOSSLESS" and file_format not in LOSSLESS_CONTAINERS:
-            if confidence < LOSSLESS_CONFIDENCE_THRESHOLD:
-                fallback = max(
-                    (cls for cls in probs_dict if cls != "LOSSLESS"),
-                    key=lambda cls: probs_dict[cls],
-                )
-                logger.debug(
-                    f"Low-confidence LOSSLESS prediction on lossy file — downgrading to {fallback}"
-                )
-                class_name = fallback
-                confidence = probs_dict[fallback]
+            fallback = max(
+                (cls for cls in probs_dict if cls != "LOSSLESS"),
+                key=lambda cls: probs_dict[cls],
+            )
+            logger.debug(
+                f"LOSSLESS prediction on lossy container — downgrading to {fallback}"
+            )
+            class_name = fallback
+            confidence = probs_dict[fallback]
 
         # Map class name to bitrate
         class_idx = CLASS_LABELS[class_name]
