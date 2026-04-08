@@ -1,6 +1,6 @@
 [project]
 name = "bitrater"
-version = "0.1.0"
+version = "0.1.1"
 description = "Audio quality analysis and bitrate detection, with optional beets plugin"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
@@ -65,11 +65,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["bitrater", "beetsplug"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"bitrater/models" = "bitrater/models"
 
-[tool.hatch.build.targets.sdist.force-include]
-"bitrater/models" = "bitrater/models"
 
 [[tool.uv.index]]
 name = "pytorch-cu126"
