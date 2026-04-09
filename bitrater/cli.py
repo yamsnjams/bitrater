@@ -23,7 +23,7 @@ def cmd_analyze(args: argparse.Namespace) -> None:
 
     analyzer = AudioQualityAnalyzer()
 
-    target = Path(args.target)
+    target = Path(args.target).resolve()
     if target.is_file():
         files = [target]
     elif target.is_dir():
