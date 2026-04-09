@@ -317,7 +317,7 @@ class BitraterPlugin(BeetsPlugin):
                 return "keep"
 
             try:
-                print(
+                logger.info(
                     f"\n  Transcode detected: {filename}\n"
                     f"  Claimed: {result.stated_bitrate or '?'}kbps | "
                     f"Actual: {result.original_format} ({result.original_bitrate}kbps) | "
