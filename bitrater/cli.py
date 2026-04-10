@@ -2,6 +2,8 @@
 
 import argparse
 import logging
+import os
+import re
 import sys
 from pathlib import Path
 
@@ -33,7 +35,13 @@ def cmd_analyze(args: argparse.Namespace) -> None:
             if p.suffix.lower() in {".mp3", ".flac", ".wav", ".ogg", ".m4a", ".aac"}
         )
     else:
-        logger.error(f"Not a file or directory: {target}")
+        hint = ""
+        if os.name == "nt" and re.match(r"^[A-Za-z]:\\", args.target):
+            hint = (
+                " Mapped network drives may not be visible to this process."
+                " Try the UNC path instead (e.g. \\\\server\\share\\path)."
+            )
+        logger.error(f"Not a file or directory: {target}{hint}")
         sys.exit(1)
 
     if not files:
