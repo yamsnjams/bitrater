@@ -20,18 +20,53 @@ def _setup_logging(verbose: bool = False) -> None:
 
 
 def _resolve_win_drive(path_str: str) -> str | None:
-    """Resolve a Windows mapped drive letter to its UNC path."""
+    """Resolve a Windows mapped drive letter to its UNC path.
+
+    Tries multiple methods since drive mappings vary by how they were created:
+    1. WNetGetConnectionW — works for active net use mappings
+    2. Registry HKCU\\Network — works for persistent mappings
+    3. net use command — broadest compatibility fallback
+    """
     if os.name != "nt" or not re.match(r"^[A-Za-z]:\\", path_str):
         return None
-    import ctypes
+
     drive = path_str[:2]  # e.g. "E:"
-    buf = ctypes.create_unicode_buffer(512)
-    length = ctypes.c_ulong(512)
-    result = ctypes.windll.mpr.WNetGetConnectionW(drive, buf, ctypes.byref(length))
-    if result != 0:
-        return None
-    # Replace drive letter with UNC root: E:\foo\bar -> \\server\share\foo\bar
-    return buf.value + path_str[2:]
+    letter = drive[0].upper()
+    rest = path_str[2:]  # e.g. "\foo\bar"
+
+    # Method 1: WNetGetConnectionW
+    try:
+        import ctypes
+        buf = ctypes.create_unicode_buffer(512)
+        length = ctypes.c_ulong(512)
+        if ctypes.windll.mpr.WNetGetConnectionW(drive, buf, ctypes.byref(length)) == 0:
+            return buf.value + rest
+    except Exception:
+        pass
+
+    # Method 2: Registry (persistent drive mappings)
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, rf"Network\{letter}") as key:
+            remote_path, _ = winreg.QueryValueEx(key, "RemotePath")
+            return remote_path + rest
+    except Exception:
+        pass
+
+    # Method 3: Parse 'net use' output
+    try:
+        import subprocess
+        output = subprocess.check_output(
+            ["net", "use", drive], text=True, stderr=subprocess.DEVNULL
+        )
+        for line in output.splitlines():
+            if line.strip().lower().startswith("remote name"):
+                unc_root = line.split(None, 2)[-1].strip()
+                return unc_root + rest
+    except Exception:
+        pass
+
+    return None
 
 
 def cmd_analyze(args: argparse.Namespace) -> None:
