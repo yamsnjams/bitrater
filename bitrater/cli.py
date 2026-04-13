@@ -11,12 +11,17 @@ logger = logging.getLogger("bitrater")
 
 
 def _setup_logging(verbose: bool = False) -> None:
-    """Configure logging for CLI usage."""
-    level = logging.DEBUG if verbose else logging.INFO
+    """Configure logging for CLI usage.
+
+    Keep the root logger at INFO so noisy libraries (numba, librosa) don't
+    flood stdout with their internal DEBUG output. Only the bitrater logger
+    drops to DEBUG when --verbose is set.
+    """
     logging.basicConfig(
-        level=level,
+        level=logging.INFO,
         format="%(levelname)s: %(message)s",
     )
+    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
 
 
 def _resolve_win_drive(path_str: str) -> str | None:

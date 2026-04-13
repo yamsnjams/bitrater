@@ -1,6 +1,6 @@
 [project]
 name = "bitrater"
-version = "0.1.4"
+version = "0.1.5"
 description = "Audio quality analysis and bitrate detection, with optional beets plugin"
 readme = "README.md"
 requires-python = ">=3.10"
